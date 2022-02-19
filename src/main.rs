@@ -42,6 +42,21 @@ fn take_for_t<Item>(
     values.take_while(move |_| t0.elapsed() < time)
 }
 
+fn slices<'a>(rep: i32, s: &'a str) -> Vec<&'a str> {
+    let mut strings = Vec::new();
+
+    for i in s.char_indices() {
+        for _ in 0..rep {
+            let (i, _) = i;
+            strings.push(&s[0..i])
+        }
+    }
+    for _ in 0..rep {
+        strings.push(s);
+    }
+
+    strings
+}
 fn main() -> Result<()> {
     std::fs::create_dir_all("output").expect("Unable to create output directory");
 
@@ -49,11 +64,19 @@ fn main() -> Result<()> {
     let t0 = Instant::now();
     let max_time = time_per_n * 25;
 
+    let tick_strings = slices(2, "UwUwUwUwUwUwU 🐈 ");
     let bar = ProgressBar::new(1000);
     bar.set_style(
         ProgressStyle::default_bar()
-            .template("ETA: {eta_precise} {spinner} {msg} {wide_bar}"),
+            .template(concat!(
+                "Computing benchmarks... {spinner}\n",
+                "{msg}\n",
+                "Elapsed / Remaining: {elapsed_precise} / {eta_precise}\n",
+                "{wide_bar}"
+            ))
+            .tick_strings(&tick_strings),
     );
+
     for n in 1..=25 {
         let num_values = n * 10;
 
@@ -85,7 +108,9 @@ fn main() -> Result<()> {
             }
             let portion = t0.elapsed().as_secs_f64() / max_time.as_secs_f64();
             bar.set_position((portion * 1000.0) as u64);
-            bar.set_message(format!("N={num_values}"));
+            bar.set_message(format!(
+                "Timing enums with {num_values} values (most recent time: {time:?})"
+            ));
         }
     }
 
