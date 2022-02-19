@@ -31,9 +31,20 @@ fn repeat_time<Result>(
         (t0.elapsed(), result)
     })
 }
+
+fn take_for_t<Item>(
+    time: Duration,
+    values: impl Iterator<Item = Item>,
+) -> impl Iterator<Item = Item> {
+    let t0 = Instant::now();
+
+    values.take_while(move |_| t0.elapsed() < time)
+}
+
 fn main() -> Result<()> {
     std::fs::create_dir_all("output").expect("Unable to create output directory");
 
+    let time_per_n = Duration::from_secs(3);
     for n in 1..=25 {
         let num_values = n * 10;
 
@@ -58,24 +69,13 @@ fn main() -> Result<()> {
                 .status()
                 .expect("Failed to execute command")
         };
-
-        let timer = Instant::now();
-
-        let mut total = Duration::ZERO;
-        for (time, status) in repeat_time(func) {
+        for (time, status) in take_for_t(time_per_n, repeat_time(func)) {
             if !status.success() {
                 println!("Error encountered. Exiting.");
                 break;
             }
 
-            total += time;
-
             println!("{num_values:>4},{time:>15?}");
-            // stdout().flush()?;
-
-            if timer.elapsed() > Duration::new(2, 0) {
-                break;
-            }
         }
     }
 
