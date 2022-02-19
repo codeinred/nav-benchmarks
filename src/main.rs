@@ -102,7 +102,7 @@ fn get_times(mut writer: Writer<File>) -> Result<Vec<(u32, Duration)>> {
                 .args([
                     "-Inav/include",
                     "-std=c++20",
-                    "input/test.cpp",
+                    "input/test_plain_enum.cpp",
                     "-o",
                     "output/test",
                     test_values_arg.as_str(),
