@@ -1,3 +1,4 @@
+use indicatif::{ProgressBar, ProgressStyle};
 use std::io::Result;
 use std::iter::repeat_with;
 use std::process::Command;
@@ -45,6 +46,14 @@ fn main() -> Result<()> {
     std::fs::create_dir_all("output").expect("Unable to create output directory");
 
     let time_per_n = Duration::from_secs(3);
+    let t0 = Instant::now();
+    let max_time = time_per_n * 25;
+
+    let bar = ProgressBar::new(1000);
+    bar.set_style(
+        ProgressStyle::default_bar()
+            .template("ETA: {eta_precise} {spinner} {msg} {wide_bar}"),
+    );
     for n in 1..=25 {
         let num_values = n * 10;
 
@@ -74,11 +83,13 @@ fn main() -> Result<()> {
                 println!("Error encountered. Exiting.");
                 break;
             }
-
-            println!("{num_values:>4},{time:>15?}");
+            let portion = t0.elapsed().as_secs_f64() / max_time.as_secs_f64();
+            bar.set_position((portion * 1000.0) as u64);
+            bar.set_message(format!("N={num_values}"));
         }
     }
 
+    bar.finish();
     println!();
     Ok(())
 }
